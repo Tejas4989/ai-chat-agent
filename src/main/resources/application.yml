@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: ai-chat-agent
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.4
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.ai: INFO
