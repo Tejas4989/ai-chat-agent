@@ -8,6 +8,7 @@ spring:
         options:
           model: gpt-4o-mini
           temperature: 0.4
+          stream-usage: true #Sends stream_options.include_usage=true
 
 server:
   port: 8080
