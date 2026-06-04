@@ -1,4 +1,4 @@
-package io.bitgenius.domain;
+package io.bitgenius.domain.records;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

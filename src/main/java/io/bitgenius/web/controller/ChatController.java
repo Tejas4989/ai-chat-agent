@@ -1,6 +1,6 @@
 package io.bitgenius.web.controller;
 
-import io.bitgenius.domain.DraftExplainRequest;
+import io.bitgenius.domain.records.DraftExplainRequest;
 import io.bitgenius.service.ChatService;
 import jakarta.validation.Valid;
 import java.util.Map;

@@ -8,7 +8,11 @@ plugins {
 
 group = 'io.bitgenius'
 version = '0.1.0'
-java.sourceCompatibility = JavaVersion.VERSION_25
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
 
 repositories { mavenCentral() }
 
@@ -37,7 +41,7 @@ tasks.named('test') { useJUnitPlatform() }
 
 spotless {
 	java {
-		googleJavaFormat('1.25.2').aosp().reflowLongStrings()
+		googleJavaFormat('1.27.0').aosp().reflowLongStrings()
 		removeUnusedImports()
 		trimTrailingWhitespace()
 		endWithNewline()

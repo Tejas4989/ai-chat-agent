@@ -1,11 +1,14 @@
 package io.bitgenius.service;
 
+import io.bitgenius.domain.records.InsuranceLead;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -176,5 +179,81 @@ public class ChatService {
                         "prompt", usage.getPromptTokens(),
                         "completion", usage.getCompletionTokens(),
                         "total", usage.getTotalTokens()));
+    }
+
+    // Day 4
+    /**
+     * Extracts structured lead data from a natural language description. Uses .entity() — Spring AI
+     * auto-wires BeanOutputConverter internally.
+     */
+    public InsuranceLead extractLead(String description) {
+        try {
+            return this.chatClient
+                    .prompt()
+                    .system(
+                            """
+                            You are a senior insurance intake specialist at PolicyCover in Ontario, Canada.
+                            Extract all available client and coverage information from the description provided.
+                            Be precise. Use null for any field that cannot be determined from the input.
+                            Do not invent information that is not present or strongly implied.
+                            Province defaults to ON (Ontario) if not specified and no other province is mentioned.
+                            """)
+                    .user(
+                            u ->
+                                    u.text(
+                                                    "Extract insurance lead data from this"
+                                                            + " description: {description}")
+                                            .param("description", description))
+                    .call()
+                    .entity(InsuranceLead.class);
+        } catch (Exception e) {
+            // Log the failure; return a minimal lead so the pipeline doesn't break
+            System.err.println("Lead extraction failed: " + e.getMessage());
+            return new InsuranceLead(
+                    null,
+                    null,
+                    null,
+                    List.of(),
+                    null,
+                    null,
+                    null,
+                    "ON",
+                    null,
+                    "EXTRACTION_FAILED: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Bulk Extractions - given a list of {descriptions}, extract multiple leads. Uses
+     * ParameterizedTypeReference for generic List<InsuranceLead>
+     */
+    public List<InsuranceLead> extractLeads(List<String> descriptions) {
+        // Build a numbered list of descriptions for the prompt
+        var numberedDescriptions = new StringBuilder();
+        int counter = 1;
+        for (var description : descriptions) {
+            numberedDescriptions.append("%d. %s \n".formatted(counter + 1, description));
+        }
+
+        return this.chatClient
+                .prompt()
+                .system(
+                        """
+                        You are a senior insurance intake specialist at PolicyCover in Ontario, Canada.
+                        Extract all available client and coverage information from the description provided.
+                        Be precise. Use null for any field that cannot be determined from the input.
+                        Do not invent information that is not present or strongly implied.
+                        Province defaults to ON (Ontario) if not specified and no other province is mentioned.
+                        """)
+                .user(
+                        u ->
+                                u.text(
+                                                "Extract lead data for each of these {count} client"
+                                                        + " descriptions:\\n"
+                                                        + "{descriptions}")
+                                        .param("descriptions", numberedDescriptions.toString())
+                                        .param("count", descriptions.size()))
+                .call()
+                .entity(new ParameterizedTypeReference<List<InsuranceLead>>() {});
     }
 }
